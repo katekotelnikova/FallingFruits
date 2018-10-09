@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">FallingFruits</string>
-
+    <string name="btn_rules">Rules</string>
+    <string name="begin">Tap anywhere to begin!</string>
+    <string name="score">Score</string>
+    <string name="lives">Lives</string>
 </resources>

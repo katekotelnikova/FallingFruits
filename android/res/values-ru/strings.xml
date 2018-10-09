@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Падающие фрукты</string>
+    <string name="btn_rules">Правила </string>
+    <string name="begin">Нажми на экран, чтобы начать</string>
+    <string name="score">Счёт</string>
+    <string name="lives">Жизни</string>
+</resources>
