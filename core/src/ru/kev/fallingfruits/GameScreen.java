@@ -27,7 +27,7 @@ public class GameScreen implements Screen {
     Texture background;
 
     Vector3 touchPos;
-    Array<Rectangle> fallingFruits;
+    Array<Fruit> fallingFruits;
 
     long lastDropTime;
     int dropGatchered;
@@ -36,7 +36,7 @@ public class GameScreen implements Screen {
 
     public GameScreen(final FallingFruits gam) {
 
-        background = new Texture("background.png");
+        background = new Texture("bg_gamescreen.jpg");
         this.game = gam;
 
         camera = new OrthographicCamera();
@@ -56,7 +56,7 @@ public class GameScreen implements Screen {
         basket.width = 64;
         basket.height = 64;
 
-        fallingFruits = new Array<Rectangle>();
+        fallingFruits = new Array<Fruit>();
 
         spawnFruits();
 
@@ -72,18 +72,8 @@ public class GameScreen implements Screen {
         game.font.draw(game.batch, "Lives: " + lives, 740, 480);
         game.batch.draw(basketImage, basket.x, basket.y);
 
-        for (Rectangle fruit : fallingFruits) {
-            int i = (int) (1 + Math.random() * 3);
-            switch (i) {
-                case 1:
-                    game.batch.draw(dropApple, fruit.x, fruit.y);
-                    break;
-                case 2:
-                    game.batch.draw(dropCherry, fruit.x, fruit.y);
-                    break;
-                case 3:
-                    game.batch.draw(dropBananas, fruit.x, fruit.y);
-            }
+        for (Fruit fruit : fallingFruits) {
+            game.batch.draw(fruit.getFruit(), fruit.x, fruit.y);
         }
 
         game.batch.end();
@@ -94,19 +84,16 @@ public class GameScreen implements Screen {
             basket.x = (int) (touchPos.x - 64 / 2);
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) basket.x -= 200 * Gdx.graphics.getDeltaTime();
-        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) basket.x += 200 * Gdx.graphics.getDeltaTime();
-
         if (basket.x < 0) basket.x = 0;
         if (basket.x > 800 - 64) basket.x = 800 - 64;
 
-        if (TimeUtils.nanoTime() - lastDropTime > 1000000000) {
+        if (TimeUtils.nanoTime() - lastDropTime > 2000000000) {
             spawnFruits();
         }
 
-        Iterator<Rectangle> iter = fallingFruits.iterator();
+        Iterator<Fruit> iter = fallingFruits.iterator();
         while (iter.hasNext()) {
-            Rectangle fruit = iter.next();
+            Fruit fruit = iter.next();
             fruit.y -= 150 * Gdx.graphics.getDeltaTime();
             if (fruit.y + 64 < 0) {
                 iter.remove();
@@ -125,11 +112,21 @@ public class GameScreen implements Screen {
     }
 
     private void spawnFruits() {
-        Rectangle fruit = new Rectangle();
-        fruit.x = MathUtils.random(0, 800 - 64);
-        fruit.y = 480;
-        fruit.width = 64;
-        fruit.height = 64;
+        Fruit fruit = new Fruit();
+
+        int i = (int) (1 + Math.random() * 3);
+        switch (i) {
+            case 1:
+               fruit.setFruit(dropApple);
+                break;
+            case 2:
+                fruit.setFruit(dropBananas);
+                break;
+            case 3:
+                fruit.setFruit(dropCherry);
+                break;
+        }
+
         fallingFruits.add(fruit);
         lastDropTime = TimeUtils.nanoTime();
     }
