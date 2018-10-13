@@ -3,7 +3,6 @@ package ru.kev.fallingfruits;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
@@ -25,14 +24,20 @@ public class GameScreen implements Screen {
     Texture dropCherry;
     Texture dropApple;
     Texture basketImage;
+    Texture background;
 
     Vector3 touchPos;
-    Array<Rectangle> fallingObjects;
+    Array<Rectangle> fallingFruits;
+    Array<Texture> imgFruits;
+
     long lastDropTime;
     int dropGatchered;
+    int lives = 5;
 
 
     public GameScreen(final FallingFruits gam) {
+
+        background = new Texture("background.png");
         this.game = gam;
 
         camera = new OrthographicCamera();
@@ -52,27 +57,41 @@ public class GameScreen implements Screen {
         basket.width = 64;
         basket.height = 64;
 
-        fallingObjects = new Array<Rectangle>();
+        fallingFruits = new Array<Rectangle>();
+        imgFruits = new Array<Texture>();
+
+        imgFruits.add(dropBananas);
+        imgFruits.add(dropCherry);
+
         spawnFruits();
 
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0.2f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
+        game.batch.draw(background, 0, 0);
         game.font.draw(game.batch, "Score: " + dropGatchered, 0, 480);
+        game.font.draw(game.batch, "Lives: " + lives, 740, 480);
         game.batch.draw(basketImage, basket.x, basket.y);
 
-        Texture fall = new Texture("apple.png");
+        for (Rectangle fruit : fallingFruits) {
+            int i = (int) (1 + Math.random() * 3);
+            switch (i) {
+                case 1:
+                    game.batch.draw(dropApple, fruit.x, fruit.y);
+                    break;
+                case 2:
+                    game.batch.draw(dropCherry, fruit.x, fruit.y);
+                    break;
+                case 3:
+                    game.batch.draw(dropBananas, fruit.x, fruit.y);
+            }
 
-        for (Rectangle fruit : fallingObjects) {
-            game.batch.draw(fall, fruit.x, fruit.y);
         }
+
 
         game.batch.end();
 
@@ -88,17 +107,22 @@ public class GameScreen implements Screen {
         if (basket.x < 0) basket.x = 0;
         if (basket.x > 800 - 64) basket.x = 800 - 64;
 
-        if (TimeUtils.nanoTime() - lastDropTime > 1000000000 ) {
+        if (TimeUtils.nanoTime() - lastDropTime > 1000000000) {
             spawnFruits();
         }
 
-        Iterator<Rectangle> iter = fallingObjects.iterator();
+        Iterator<Rectangle> iter = fallingFruits.iterator();
         while (iter.hasNext()) {
             Rectangle fruit = iter.next();
-            fruit.y -= 200 * Gdx.graphics.getDeltaTime();
+            fruit.y -= 150 * Gdx.graphics.getDeltaTime();
             if (fruit.y + 64 < 0) {
                 iter.remove();
                 Gdx.input.vibrate(80);
+                if (lives > 0) {
+                    lives--;
+                } else {
+                    game.setScreen(new GameOver(game));
+                }
             }
             if (fruit.overlaps(basket)) {
                 dropGatchered++;
@@ -113,7 +137,7 @@ public class GameScreen implements Screen {
         fruit.y = 480;
         fruit.width = 64;
         fruit.height = 64;
-        fallingObjects.add(fruit);
+        fallingFruits.add(fruit);
         lastDropTime = TimeUtils.nanoTime();
     }
 
