@@ -28,7 +28,6 @@ public class GameScreen implements Screen {
 
     Vector3 touchPos;
     Array<Rectangle> fallingFruits;
-    Array<Texture> imgFruits;
 
     long lastDropTime;
     int dropGatchered;
@@ -58,10 +57,6 @@ public class GameScreen implements Screen {
         basket.height = 64;
 
         fallingFruits = new Array<Rectangle>();
-        imgFruits = new Array<Texture>();
-
-        imgFruits.add(dropBananas);
-        imgFruits.add(dropCherry);
 
         spawnFruits();
 
@@ -89,9 +84,7 @@ public class GameScreen implements Screen {
                 case 3:
                     game.batch.draw(dropBananas, fruit.x, fruit.y);
             }
-
         }
-
 
         game.batch.end();
 
