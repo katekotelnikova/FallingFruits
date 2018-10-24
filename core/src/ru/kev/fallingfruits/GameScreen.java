@@ -1,13 +1,15 @@
 package ru.kev.fallingfruits;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
 
@@ -18,35 +20,31 @@ import java.util.Iterator;
 public class GameScreen implements Screen {
     final FallingFruits game;
     OrthographicCamera camera;
-    Rectangle basket;
+    private Rectangle basket;
 
-    Texture dropBananas;
-    Texture dropCherry;
-    Texture dropApple;
-    Texture basketImage;
-    Texture background;
+    private Texture basketImage;
+    private Texture background;
 
-    Vector3 touchPos;
-    Array<Fruit> fallingFruits;
+    private Vector3 touchPos;
+    private Array<Fruit> fallingFruits;
+    private Array<Danger> fallingDangerous;
 
-    long lastDropTime;
-    int dropGatchered;
-    int lives = 5;
+    private long lastDropTime;
+    private long lastDropDangTime;
+    private static int dropGatchered;
+    private int lives = 5;
 
 
     public GameScreen(final FallingFruits gam) {
+        background = new Texture("bg_menu.jpg");
 
-        background = new Texture("bg_gamescreen.jpg");
         this.game = gam;
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 800, 480);
 
         touchPos = new Vector3();
-
-        dropBananas = new Texture("bananas.png");
-        dropCherry = new Texture("cherry.png");
-        dropApple = new Texture("apple.png");
+        dropGatchered = 0;
 
         basketImage = new Texture("basket.png");
 
@@ -57,8 +55,10 @@ public class GameScreen implements Screen {
         basket.height = 64;
 
         fallingFruits = new Array<Fruit>();
+        fallingDangerous = new Array<Danger>();
 
         spawnFruits();
+        spawnDanger();
 
     }
 
@@ -76,6 +76,10 @@ public class GameScreen implements Screen {
             game.batch.draw(fruit.getFruit(), fruit.x, fruit.y);
         }
 
+        for (Danger danger : fallingDangerous) {
+            game.batch.draw(danger.getDanger(), danger.x, danger.y);
+        }
+
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
@@ -87,18 +91,26 @@ public class GameScreen implements Screen {
         if (basket.x < 0) basket.x = 0;
         if (basket.x > 800 - 64) basket.x = 800 - 64;
 
-        if (TimeUtils.nanoTime() - lastDropTime > 2000000000) {
+        if (TimeUtils.millis() - lastDropTime > 1500) {
             spawnFruits();
+        }
+
+        if (TimeUtils.millis() - lastDropDangTime > 5000) {
+            spawnDanger();
         }
 
         Iterator<Fruit> iter = fallingFruits.iterator();
         while (iter.hasNext()) {
             Fruit fruit = iter.next();
-            fruit.y -= 150 * Gdx.graphics.getDeltaTime();
+            if (dropGatchered <= 10) {
+                fruit.y -= 200 * Gdx.graphics.getDeltaTime();
+            } else {
+                fruit.y -= 250 * Gdx.graphics.getDeltaTime();
+            }
             if (fruit.y + 64 < 0) {
                 iter.remove();
                 Gdx.input.vibrate(80);
-                if (lives > 0) {
+                if (lives >= 1) {
                     lives--;
                 } else {
                     game.setScreen(new GameOver(game));
@@ -109,33 +121,48 @@ public class GameScreen implements Screen {
                 iter.remove();
             }
         }
+
+        Iterator<Danger> iter2 = fallingDangerous.iterator();
+        while (iter2.hasNext()) {
+            Danger danger = iter2.next();
+            if (dropGatchered <= 10) {
+                danger.y -= 150 * Gdx.graphics.getDeltaTime();
+            } else {
+                danger.y -= 200 * Gdx.graphics.getDeltaTime();
+            }
+            if (danger.y + 64 < 0) {
+                iter2.remove();
+            }
+            if (danger.overlaps(basket)) {
+                Gdx.input.vibrate(80);
+                if (lives >= 1) {
+                    lives--;
+                } else {
+                    game.setScreen(new GameOver(game));
+                }
+                iter2.remove();
+            }
+        }
     }
 
     private void spawnFruits() {
         Fruit fruit = new Fruit();
-
-        int i = (int) (1 + Math.random() * 3);
-        switch (i) {
-            case 1:
-               fruit.setFruit(dropApple);
-                break;
-            case 2:
-                fruit.setFruit(dropBananas);
-                break;
-            case 3:
-                fruit.setFruit(dropCherry);
-                break;
-        }
-
         fallingFruits.add(fruit);
-        lastDropTime = TimeUtils.nanoTime();
+        lastDropTime = TimeUtils.millis();
+    }
+
+    private void spawnDanger() {
+        Danger danger = new Danger();
+        fallingDangerous.add(danger);
+        lastDropDangTime = TimeUtils.millis();
+    }
+
+    public static int getDropGatchered() {
+        return dropGatchered;
     }
 
     @Override
     public void dispose() {
-        dropBananas.dispose();
-        dropCherry.dispose();
-        dropApple.dispose();
         basketImage.dispose();
     }
 
